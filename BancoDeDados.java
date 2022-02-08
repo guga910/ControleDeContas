@@ -183,7 +183,7 @@ public class BancoDeDados {
 		Date data;
 		LocalDate hoje = LocalDate.now();
 		LocalDate hoje2 = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), 1);
-		LocalDate amanha = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), 30);
+		LocalDate amanha = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), hoje.lengthOfMonth());
 
 		System.out.println("Contas a serem pagas em " + hoje2.getMonth()+":");
 
@@ -280,28 +280,24 @@ public class BancoDeDados {
 		resultado.close();
 
 	}
-
-	public void mostrarContasAPagar(String usuario) throws SQLException {
+	@SuppressWarnings("unused")
+	public void mostrarContasVencidas(String usuario) throws SQLException {
 
 		criarDbeTabela(usuario);
 		Date data;
 		LocalDate hoje = LocalDate.now();
 		LocalDate hoje2 = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), 1);
 		LocalDate amanha = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), hoje.lengthOfMonth());
-
+LocalDate mesPassado= LocalDate.of(hoje.getYear(), hoje.getMonthValue()-1, hoje.getDayOfMonth());
 		
 		
-		System.out.println("Contas a Pagar do mes de " + hoje2.getMonth() + ": ");
+		System.out.println("Contas Vencidas: ");
 
 		String nomeBD = "CDC_" + usuario;
 
 		String consultaMes = "SELECT id, descricao, valor, vencimento from controle_de_contas." + nomeBD
-				+ " where paga =0 and vencimento between CAST('" + hoje2 + "' AS DATE) AND CAST( '" + amanha+
-				"' AS DATE);";
-//System.out.println("hoje: "+hoje);
-//System.out.println("hoje2: "+hoje2);
-//System.out.println("amanha: "+amanha);
-
+				+ " where  paga= 0 and vencimento < '"+hoje+"' ;";
+//		vencimento < '2022-01-31' and paga= 0;
 		System.out.println();
 
 		Statement stmt = BancoDeDados.getConexao().createStatement();
@@ -328,6 +324,63 @@ public class BancoDeDados {
 		for (int i = 0; i < boletos.size(); i++) {
 
 			int i2 = i + 1;
+			System.err.println("Id: " + 0 + i2 + " Descri: " + boletos.get(i).getDescricao() + ": "
+					+ boletos.get(i).getValor() + ", venc: " + boletos.get(i).getVencimento());
+
+		}
+		
+		stmt.close();
+		resultado.close();
+
+	}
+	
+	public void mostrarContasAPagar(String usuario) throws SQLException {
+
+		criarDbeTabela(usuario);
+		
+		Date data;
+		LocalDate hoje = LocalDate.now();
+		LocalDate hoje2 = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), 1);
+		LocalDate amanha = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), hoje.lengthOfMonth());
+
+		mostrarContasVencidas(usuario);
+		
+		System.out.println("\nContas a Pagar do mes de " + hoje2.getMonth() + ": ");
+
+		String nomeBD = "CDC_" + usuario;
+
+		String consultaMes = "SELECT id, descricao, valor, vencimento from controle_de_contas." + nomeBD
+				+ " where paga =0 and vencimento between CAST('" + hoje2 + "' AS DATE) AND CAST( '" + amanha+
+				"' AS DATE);";
+//System.out.println("hoje: "+hoje);
+//System.out.println("hoje2: "+hoje2);
+//System.out.println("amanha: "+amanha);
+
+
+		Statement stmt = BancoDeDados.getConexao().createStatement();
+		ResultSet resultado = stmt.executeQuery(consultaMes);
+
+		List<Boletos> boletos = new ArrayList<>();
+
+		while (resultado.next()) {
+
+			int valor = resultado.getInt("valor");
+			String descricao = resultado.getString("descricao");
+			int indice = resultado.getInt("id");
+
+			while (descricao.length() < 10) {
+				descricao += " ";
+			}
+
+			data = resultado.getDate("vencimento");
+
+			boletos.add(new Boletos(indice, descricao, valor, data));
+
+		}
+		System.out.println();
+		for (int i = 0; i < boletos.size(); i++) {
+
+			int i2 = i + 1;
 			System.out.println("Id: " + 0 + i2 + " Descri: " + boletos.get(i).getDescricao() + ": "
 					+ boletos.get(i).getValor() + ", venc: " + boletos.get(i).getVencimento());
 
@@ -342,7 +395,7 @@ public class BancoDeDados {
 		Date data;
 		LocalDate hoje = LocalDate.now();
 		LocalDate hoje2 = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), 1);
-		LocalDate amanha = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), 30);
+		LocalDate amanha = LocalDate.of(hoje.getYear(), hoje.getMonthValue(), hoje.lengthOfMonth());
 
 
 		String nomeBD = "CDC_" + usuario;
